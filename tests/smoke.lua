@@ -162,12 +162,16 @@ do
   local ok = pcall(vim.cmd, "write")
   check("write survives formatter error", ok)
   check("buffer saved", vim.fn.readfile(f)[1] == "fn main( {x", vim.inspect(vim.fn.readfile(f)))
+  -- conform reports the failure asynchronously
   local told = false
-  for _, n in ipairs(notices) do
-    if n:find("rustfmt", 1, true) then
-      told = true
+  vim.wait(2000, function()
+    for _, n in ipairs(notices) do
+      if n:find("Formatter failed", 1, true) then
+        told = true
+      end
     end
-  end
+    return told
+  end, 20)
   check("formatter failure is reported", told, vim.inspect(notices))
 end
 
@@ -264,8 +268,9 @@ do
   for _, t in ipairs(_G.MiniClue and MiniClue.config.triggers or {}) do
     has[t.keys] = true
   end
+  -- mini.clue stores triggers as raw key codes
   for _, k in ipairs({ "<C-w>", "'", "`", '"' }) do
-    check("clue trigger " .. k, has[k] == true)
+    check("clue trigger " .. k, has[vim.keycode(k)] == true)
   end
 end
 

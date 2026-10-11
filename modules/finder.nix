@@ -5,9 +5,14 @@ let
   # against the unstable glibc (GLIBC_ABI_GNU2_TLS), which the stable
   # Neovim process cannot load. Only zig (build-time, needed by the zlob
   # crate) comes from unstable.
+  # Upstream's test suite is skipped: it compiles dozens of test binaries and
+  # roughly doubles the build, and the smoke test exercises the library.
+  rustPlatform = pkgs.rustPlatform // {
+    buildRustPackage = args: pkgs.rustPlatform.buildRustPackage (args // { doCheck = false; });
+  };
   fff-nvim = pkgs.callPackage (
     unstable.path + "/pkgs/applications/editors/vim/plugins/non-generated/fff-nvim/default.nix"
-  ) { inherit (unstable) zig; };
+  ) { inherit (unstable) zig; inherit rustPlatform; };
 in
 {
   plugins.fff = {
